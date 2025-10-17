@@ -13,10 +13,20 @@ class BudgetSeeder extends Seeder
         $month = first_day_of_month(now());
         $categories = Category::where('type', 'expense')->get();
 
+        $defaultBudgets = [
+            'Makanan & Minuman' => 2500000,
+            'Transportasi' => 750000,
+            'Tagihan Rumah' => 1800000,
+            'Belanja Rumah Tangga' => 1200000,
+            'Hiburan' => 900000,
+        ];
+
         foreach ($categories as $category) {
+            $amount = $defaultBudgets[$category->name] ?? 1000000;
+
             Budget::updateOrCreate(
                 ['category_id' => $category->id, 'month' => $month],
-                ['amount' => random_int(800000, 2500000)]
+                ['amount' => $amount]
             );
         }
     }

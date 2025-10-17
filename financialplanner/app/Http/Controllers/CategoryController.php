@@ -24,7 +24,7 @@ class CategoryController extends Controller
 
         Category::create($data);
 
-        return redirect()->route('categories.index')->with('status', 'Category created.');
+        return redirect()->route('categories.index')->with('status', 'Kategori baru berhasil ditambahkan.');
     }
 
     public function update(Request $request, Category $category): RedirectResponse
@@ -33,14 +33,14 @@ class CategoryController extends Controller
 
         $category->update($data);
 
-        return redirect()->route('categories.index')->with('status', 'Category updated.');
+        return redirect()->route('categories.index')->with('status', 'Kategori berhasil diperbarui.');
     }
 
     public function destroy(Category $category): RedirectResponse
     {
         $category->delete();
 
-        return redirect()->route('categories.index')->with('status', 'Category deleted.');
+        return redirect()->route('categories.index')->with('status', 'Kategori berhasil dihapus.');
     }
 
     protected function validateCategory(Request $request, ?Category $category = null): array

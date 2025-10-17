@@ -4,13 +4,13 @@
 <div class="space-y-8">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-semibold text-slate-800">Reports</h1>
-            <p class="text-sm text-slate-500">Visualise trends and compare wallets and categories.</p>
+            <h1 class="text-2xl font-semibold text-slate-800">Laporan</h1>
+            <p class="text-sm text-slate-500">Visualisasikan tren dan bandingkan dompet serta kategori.</p>
         </div>
         <form method="GET" class="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-            <label class="text-xs font-medium uppercase tracking-wide text-slate-500">Month</label>
+            <label class="text-xs font-medium uppercase tracking-wide text-slate-500">Bulan</label>
             <input type="month" name="month" value="{{ $selectedMonth->format('Y-m') }}" class="rounded-full border-0 text-sm focus:ring-0" />
-            <button type="submit" class="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700">Apply</button>
+            <button type="submit" class="rounded-full bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700">Terapkan</button>
         </form>
     </div>
 
@@ -18,21 +18,21 @@
         <div class="space-y-6 lg:col-span-2">
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-800">Monthly Income vs Expense</h2>
-                    <p class="text-sm text-slate-500">Last 6 months</p>
+                    <h2 class="text-lg font-semibold text-slate-800">Pemasukan vs Pengeluaran Bulanan</h2>
+                    <p class="text-sm text-slate-500">6 bulan terakhir</p>
                 </div>
                 <canvas id="monthlyChart" class="mt-6 h-64 w-full"></canvas>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-slate-800">Weekly Breakdown ({{ $selectedMonth->isoFormat('MMM YYYY') }})</h2>
-                    <p class="text-sm text-slate-500">Income vs expense per ISO week</p>
+                    <h2 class="text-lg font-semibold text-slate-800">Rincian Mingguan ({{ $selectedMonth->isoFormat('MMM YYYY') }})</h2>
+                    <p class="text-sm text-slate-500">Pemasukan vs pengeluaran per minggu</p>
                 </div>
                 <canvas id="weeklyChart" class="mt-6 h-64 w-full"></canvas>
             </div>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-slate-800">Wallet Share ({{ $selectedMonth->isoFormat('MMM YYYY') }})</h2>
+            <h2 class="text-lg font-semibold text-slate-800">Porsi Dompet ({{ $selectedMonth->isoFormat('MMM YYYY') }})</h2>
             <canvas id="walletChart" class="mt-6 h-64 w-full"></canvas>
         </div>
     </section>
@@ -40,14 +40,14 @@
     <section class="grid gap-6 lg:grid-cols-2">
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-200 px-4 py-4">
-                <h3 class="text-lg font-semibold text-slate-800">Category Breakdown</h3>
-                <p class="text-sm text-slate-500">Expenses for {{ $selectedMonth->isoFormat('MMM YYYY') }}</p>
+                <h3 class="text-lg font-semibold text-slate-800">Rincian Kategori</h3>
+                <p class="text-sm text-slate-500">Pengeluaran {{ $selectedMonth->isoFormat('MMM YYYY') }}</p>
             </div>
             <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-4 py-3">Category</th>
-                        <th class="px-4 py-3 text-right">Spent</th>
+                        <th class="px-4 py-3">Kategori</th>
+                        <th class="px-4 py-3 text-right">Realisasi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -63,7 +63,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="px-4 py-8 text-center text-sm text-slate-500">No expenses recorded for this month.</td>
+                            <td colspan="2" class="px-4 py-8 text-center text-sm text-slate-500">Belum ada pengeluaran pada bulan ini.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -71,15 +71,15 @@
         </div>
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-200 px-4 py-4">
-                <h3 class="text-lg font-semibold text-slate-800">Wallet Summary</h3>
-                <p class="text-sm text-slate-500">Income and expense totals</p>
+                <h3 class="text-lg font-semibold text-slate-800">Ringkasan Dompet</h3>
+                <p class="text-sm text-slate-500">Total pemasukan dan pengeluaran</p>
             </div>
             <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-4 py-3">Wallet</th>
-                        <th class="px-4 py-3 text-right">Income</th>
-                        <th class="px-4 py-3 text-right">Expense</th>
+                        <th class="px-4 py-3">Dompet</th>
+                        <th class="px-4 py-3 text-right">Pemasukan</th>
+                        <th class="px-4 py-3 text-right">Pengeluaran</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -96,7 +96,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">No data yet. Add transactions to see wallet performance.</td>
+                            <td colspan="3" class="px-4 py-8 text-center text-sm text-slate-500">Belum ada data. Tambahkan transaksi untuk melihat performa dompet.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -118,8 +118,8 @@
         data: {
             labels: monthLabels,
             datasets: [
-                { label: 'Income', data: monthlyIncome, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderRadius: 8 },
-                { label: 'Expense', data: monthlyExpense, backgroundColor: 'rgba(244, 63, 94, 0.7)', borderRadius: 8 }
+                { label: 'Pemasukan', data: monthlyIncome, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderRadius: 8 },
+                { label: 'Pengeluaran', data: monthlyExpense, backgroundColor: 'rgba(244, 63, 94, 0.7)', borderRadius: 8 }
             ]
         },
         options: {
@@ -143,8 +143,8 @@
         data: {
             labels: weeklyData.map(item => item.label),
             datasets: [
-                { label: 'Income', data: weeklyData.map(item => item.income), borderColor: 'rgba(16, 185, 129, 1)', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.4, fill: true },
-                { label: 'Expense', data: weeklyData.map(item => item.expense), borderColor: 'rgba(244, 63, 94, 1)', backgroundColor: 'rgba(244, 63, 94, 0.1)', tension: 0.4, fill: true }
+                { label: 'Pemasukan', data: weeklyData.map(item => item.income), borderColor: 'rgba(16, 185, 129, 1)', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.4, fill: true },
+                { label: 'Pengeluaran', data: weeklyData.map(item => item.expense), borderColor: 'rgba(244, 63, 94, 1)', backgroundColor: 'rgba(244, 63, 94, 0.1)', tension: 0.4, fill: true }
             ]
         },
         options: {

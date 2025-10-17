@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Finance Planner' }}</title>
+    <title>{{ $title ?? 'Perencana Keuangan' }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,18 +26,18 @@
         <header class="sticky top-0 z-40 border-b border-white/10 backdrop-blur">
             <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
                 <div>
-                    <a href="{{ route('dashboard') }}" class="text-lg font-semibold tracking-tight">Finance Planner</a>
-                    <p class="text-sm text-slate-300">Track income, expenses, budgets, and wallets at a glance.</p>
+                    <a href="{{ route('dashboard') }}" class="text-lg font-semibold tracking-tight">Perencana Keuangan</a>
+                    <p class="text-sm text-slate-300">Pantau pemasukan, pengeluaran, anggaran, dan dompet dalam satu tempat.</p>
                 </div>
                 <nav class="hidden gap-3 text-sm font-medium sm:flex">
                     @php
                         $links = [
-                            'Dashboard' => route('dashboard'),
-                            'Transactions' => route('transactions.index'),
-                            'Budgets' => route('budgets.index'),
-                            'Categories' => route('categories.index'),
-                            'Wallets' => route('wallets.index'),
-                            'Reports' => route('reports.index'),
+                            'Dasbor' => route('dashboard'),
+                            'Transaksi' => route('transactions.index'),
+                            'Anggaran' => route('budgets.index'),
+                            'Kategori' => route('categories.index'),
+                            'Dompet' => route('wallets.index'),
+                            'Laporan' => route('reports.index'),
                         ];
                     @endphp
                     @foreach ($links as $label => $url)
@@ -63,7 +63,7 @@
     </main>
 
     <footer class="py-6 text-center text-sm text-slate-500">
-        &copy; {{ date('Y') }} Finance Planner. Crafted with Laravel &amp; Tailwind.
+        &copy; {{ date('Y') }} Perencana Keuangan. Dibangun dengan Laravel &amp; Tailwind.
     </footer>
 
     @stack('scripts')

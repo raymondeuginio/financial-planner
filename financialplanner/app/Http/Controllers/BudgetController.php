@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,72 +13,89 @@ use Illuminate\Validation\Rule;
 
 class BudgetController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $selectedMonthInput = $request->input('month');
+        try {
+            $selectedMonth = Carbon::createFromFormat('Y-m', $selectedMonthInput)->startOfMonth();
+        } catch (\Throwable $e) {
+            $selectedMonth = Carbon::now()->startOfMonth();
+        }
+
+        $selectedYear = (int) $selectedMonth->format('Y');
+        $monthGrid = collect(range(1, 12))->map(fn ($month) => Carbon::create($selectedYear, $month, 1));
+
         $budgets = Budget::with('category')
-            ->orderByDesc('month')
+            ->whereDate('month', $selectedMonth->toDateString())
             ->orderBy('category_id')
             ->get();
 
-        $spent = collect();
-        if ($budgets->isNotEmpty()) {
-            $startMonth = $budgets->min('month')->copy()->startOfMonth();
-            $endMonth = $budgets->max('month')->copy()->endOfMonth();
-            $categoryIds = $budgets->pluck('category_id')->unique()->values();
+        $expensesByCategory = Transaction::selectRaw('category_id, SUM(amount) as total')
+            ->where('type', 'expense')
+            ->whereBetween('occurred_at', [$selectedMonth->copy()->startOfMonth(), $selectedMonth->copy()->endOfMonth()])
+            ->groupBy('category_id')
+            ->get()
+            ->keyBy('category_id');
 
-            $spent = Transaction::selectRaw('category_id, DATE_FORMAT(occurred_at, "%Y-%m-01") as month_key, SUM(amount) as total')
-                ->where('type', 'expense')
-                ->whereBetween('occurred_at', [$startMonth, $endMonth])
-                ->whereIn('category_id', $categoryIds)
-                ->groupBy('category_id', 'month_key')
-                ->get()
-                ->keyBy(fn ($row) => $row->category_id . '|' . $row->month_key);
-        }
-
-        $budgets->transform(function (Budget $budget) use ($spent) {
-            $key = $budget->category_id . '|' . $budget->month->toDateString();
-            $totalSpent = (float) ($spent[$key]->total ?? 0);
+        $budgets->transform(function (Budget $budget) use ($expensesByCategory) {
+            $totalSpent = (float) ($expensesByCategory[$budget->category_id]->total ?? 0);
             $budget->spent_amount = $totalSpent;
             $budget->remaining_amount = (float) $budget->amount - $totalSpent;
 
             return $budget;
         });
 
+        $monthlyTransactions = Transaction::with(['category', 'wallet'])
+            ->whereBetween('occurred_at', [$selectedMonth->copy()->startOfMonth(), $selectedMonth->copy()->endOfMonth()])
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->get();
+
         return view('budgets.index', [
             'budgets' => $budgets,
             'categories' => Category::where('type', 'expense')->orderBy('name')->get(),
-            'budget' => new Budget(['month' => now()->startOfMonth(), 'amount' => 0]),
+            'budget' => new Budget(['month' => $selectedMonth, 'amount' => 0]),
+            'selectedMonth' => $selectedMonth,
+            'monthGrid' => $monthGrid,
+            'monthlyTransactions' => $monthlyTransactions,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateBudget($request);
-        $data['month'] = first_day_of_month($data['month']);
+        $month = first_day_of_month($data['month']);
+        $data['month'] = $month;
 
         Budget::updateOrCreate(
             ['category_id' => $data['category_id'], 'month' => $data['month']],
             ['amount' => $data['amount']]
         );
 
-        return redirect()->route('budgets.index')->with('status', 'Budget saved.');
+        return redirect()->route('budgets.index', ['month' => Carbon::parse($month)->format('Y-m')])
+            ->with('status', 'Anggaran berhasil disimpan.');
     }
 
     public function update(Request $request, Budget $budget): RedirectResponse
     {
         $data = $this->validateBudget($request, $budget);
-        $data['month'] = first_day_of_month($data['month']);
+        $month = first_day_of_month($data['month']);
+        $data['month'] = $month;
 
         $budget->update($data);
 
-        return redirect()->route('budgets.index')->with('status', 'Budget updated.');
+        return redirect()->route('budgets.index', ['month' => Carbon::parse($month)->format('Y-m')])
+            ->with('status', 'Anggaran berhasil diperbarui.');
     }
 
     public function destroy(Budget $budget): RedirectResponse
     {
+        $month = $budget->month?->format('Y-m');
+
         $budget->delete();
 
-        return redirect()->route('budgets.index')->with('status', 'Budget deleted.');
+        return redirect()->route('budgets.index', $month ? ['month' => $month] : [])
+            ->with('status', 'Anggaran berhasil dihapus.');
     }
 
     protected function validateBudget(Request $request, ?Budget $budget = null): array
