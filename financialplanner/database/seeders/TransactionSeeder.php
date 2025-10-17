@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
 
 class TransactionSeeder extends Seeder
 {
@@ -27,104 +28,129 @@ class TransactionSeeder extends Seeder
         $start = now()->subMonths(3)->startOfMonth();
         $end = now()->endOfMonth();
 
-        // Recurring monthly incomes
+        $salaryCategory = $incomeCategories['Gaji Pokok'] ?? $incomeCategories->first();
+        $bonusCategory = $incomeCategories['Bonus Kinerja'] ?? $incomeCategories->first();
+        $refundCategory = $incomeCategories['Pengembalian Dana'] ?? $incomeCategories->first();
+
+        $salaryAmounts = [12500000, 12750000, 13000000];
+        $bonusAmounts = [1500000, 2000000, 2500000, 3000000];
+        $refundAmounts = [250000, 300000, 400000, 500000];
+
         $period = CarbonPeriod::create($start, '1 month', $end);
+        $index = 0;
         foreach ($period as $month) {
             Transaction::create([
                 'wallet_id' => $wallets->firstWhere('type', 'bank')->id ?? $wallets->first()->id,
-                'category_id' => $incomeCategories['Salary']->id ?? $incomeCategories->first()->id,
+                'category_id' => $salaryCategory->id,
                 'occurred_at' => $month->copy()->addDays(1),
-                'description' => 'Monthly Salary',
-                'amount' => 15000000 + random_int(-1000000, 1500000),
+                'description' => 'Gaji Bulanan',
+                'amount' => $salaryAmounts[$index % count($salaryAmounts)],
                 'type' => 'income',
-                'notes' => 'Deposited automatically',
+                'notes' => 'Transfer gaji dari perusahaan',
             ]);
 
             if ($faker->boolean(60)) {
                 Transaction::create([
                     'wallet_id' => $wallets->firstWhere('type', 'bank')->id ?? $wallets->first()->id,
-                    'category_id' => $incomeCategories['Bonus']->id ?? $incomeCategories->first()->id,
-                    'occurred_at' => $month->copy()->addDays(random_int(5, 20)),
-                    'description' => 'Performance Bonus',
-                    'amount' => random_int(1000000, 4000000),
+                    'category_id' => $bonusCategory->id,
+                    'occurred_at' => $month->copy()->addDays($faker->numberBetween(5, 18)),
+                    'description' => 'Bonus Kinerja',
+                    'amount' => Arr::random($bonusAmounts),
                     'type' => 'income',
-                    'notes' => 'Quarter incentive',
+                    'notes' => 'Insentif kuartalan',
                 ]);
             }
 
             if ($faker->boolean(40)) {
                 Transaction::create([
                     'wallet_id' => $wallets->random()->id,
-                    'category_id' => $incomeCategories['Refund']->id ?? $incomeCategories->first()->id,
-                    'occurred_at' => $month->copy()->addDays(random_int(10, 25)),
-                    'description' => 'Refund',
-                    'amount' => random_int(200000, 800000),
+                    'category_id' => $refundCategory->id,
+                    'occurred_at' => $month->copy()->addDays($faker->numberBetween(10, 24)),
+                    'description' => 'Reimburse',
+                    'amount' => Arr::random($refundAmounts),
                     'type' => 'income',
-                    'notes' => 'Expense reimbursement',
+                    'notes' => 'Penggantian biaya kantor',
                 ]);
             }
+
+            $index++;
         }
 
-        // Daily expenses sprinkled across wallets and categories
-        for ($i = 0; $i < 65; $i++) {
+        $expenseTemplates = [
+            'Makanan & Minuman' => [
+                ['Sarapan di kafe', 45000],
+                ['Belanja pasar mingguan', 185000],
+                ['Makan malam keluarga', 275000],
+                ['Ngopi bareng teman', 60000],
+            ],
+            'Transportasi' => [
+                ['Isi bensin motor', 120000],
+                ['Taksi online ke kantor', 55000],
+                ['Parkir harian', 25000],
+                ['Langganan KRL', 150000],
+            ],
+            'Tagihan Rumah' => [
+                ['Tagihan listrik PLN', 450000],
+                ['Tagihan internet fiber', 375000],
+                ['Pembayaran PDAM', 185000],
+                ['Iuran kebersihan', 75000],
+            ],
+            'Belanja Rumah Tangga' => [
+                ['Belanja kebutuhan dapur', 320000],
+                ['Perlengkapan kebersihan', 98000],
+                ['Isi ulang gas 12kg', 225000],
+                ['Perlengkapan mandi', 87000],
+            ],
+            'Hiburan' => [
+                ['Langganan streaming', 169000],
+                ['Bioskop akhir pekan', 120000],
+                ['Karaoke bersama', 210000],
+                ['Hangout malam minggu', 150000],
+            ],
+        ];
+
+        for ($i = 0; $i < 70; $i++) {
             $date = Carbon::parse($faker->dateTimeBetween($start, $end));
             $category = $expenseCategories->random();
             $wallet = $wallets->random();
-
-            $description = match ($category->name) {
-                'Food' => $faker->randomElement(['Lunch with friends', 'Coffee break', 'Family dinner', 'Takeaway meal']),
-                'Transport' => $faker->randomElement(['Grab ride', 'Fuel refill', 'Commuter pass', 'Parking fee']),
-                'Bills' => $faker->randomElement(['Electricity bill', 'Internet subscription', 'Water utility', 'Phone top-up']),
-                'Shopping' => $faker->randomElement(['Groceries run', 'Online order', 'Clothing purchase', 'Household supplies']),
-                'Entertainment' => $faker->randomElement(['Movie night', 'Streaming subscription', 'Concert ticket', 'Weekend outing']),
-                default => $faker->sentence(3),
-            };
+            $options = $expenseTemplates[$category->name] ?? [['Pengeluaran harian', 95000]];
+            [$description, $amount] = Arr::random($options);
 
             Transaction::create([
                 'wallet_id' => $wallet->id,
                 'category_id' => $category->id,
                 'occurred_at' => $date,
                 'description' => $description,
-                'amount' => $this->randomExpenseAmount($category->name),
+                'amount' => $amount,
                 'type' => 'expense',
-                'notes' => $faker->optional()->sentence(),
+                'notes' => $faker->optional()->sentence(4),
             ]);
         }
 
-        // Occasional top-ups between wallets
         for ($i = 0; $i < 8; $i++) {
             $date = Carbon::parse($faker->dateTimeBetween($start, $end));
+
             Transaction::create([
                 'wallet_id' => $wallets->firstWhere('type', 'bank')->id ?? $wallets->first()->id,
-                'category_id' => $incomeCategories['Bonus']->id ?? $incomeCategories->first()->id,
+                'category_id' => $bonusCategory->id,
                 'occurred_at' => $date,
-                'description' => 'Wallet top-up',
-                'amount' => random_int(200000, 600000),
+                'description' => 'Top up dompet digital',
+                'amount' => Arr::random([200000, 250000, 300000, 350000]),
                 'type' => 'income',
-                'notes' => 'Moved from savings',
+                'notes' => 'Pemindahan dana untuk kebutuhan harian',
             ]);
+
+            $shoppingCategory = $expenseCategories->firstWhere('name', 'Belanja Rumah Tangga') ?? $expenseCategories->first();
 
             Transaction::create([
                 'wallet_id' => $wallets->firstWhere('type', 'ewallet')->id ?? $wallets->last()->id,
-                'category_id' => $expenseCategories->firstWhere('name', 'Shopping')->id ?? $expenseCategories->first()->id,
+                'category_id' => $shoppingCategory->id,
                 'occurred_at' => $date,
-                'description' => 'Marketplace order',
-                'amount' => random_int(150000, 450000),
+                'description' => 'Pembelian marketplace',
+                'amount' => Arr::random([135000, 185000, 225000, 265000]),
                 'type' => 'expense',
-                'notes' => 'Promo purchase',
+                'notes' => 'Pesanan kebutuhan rumah',
             ]);
         }
-    }
-
-    protected function randomExpenseAmount(string $categoryName): int
-    {
-        return match ($categoryName) {
-            'Food' => random_int(30000, 180000),
-            'Transport' => random_int(20000, 120000),
-            'Bills' => random_int(150000, 900000),
-            'Shopping' => random_int(75000, 600000),
-            'Entertainment' => random_int(50000, 350000),
-            default => random_int(25000, 200000),
-        };
     }
 }

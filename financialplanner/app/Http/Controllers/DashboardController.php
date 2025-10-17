@@ -35,7 +35,7 @@ class DashboardController extends Controller
             ->map(function (Wallet $wallet) {
                 $income = (float) ($wallet->income_sum ?? 0);
                 $expense = (float) ($wallet->expense_sum ?? 0);
-                $wallet->current_balance = (float) $wallet->starting_balance + $income - $expense;
+                $wallet->current_balance = $income - $expense;
 
                 return $wallet;
             });

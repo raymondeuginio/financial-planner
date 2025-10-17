@@ -10,9 +10,9 @@ class WalletSeeder extends Seeder
     public function run(): void
     {
         $wallets = [
-            ['name' => 'Cash', 'type' => 'cash', 'starting_balance' => 1500000, 'color' => '#f97316'],
-            ['name' => 'BCA', 'type' => 'bank', 'starting_balance' => 7500000, 'color' => '#2563eb'],
-            ['name' => 'GoPay', 'type' => 'ewallet', 'starting_balance' => 500000, 'color' => '#10b981'],
+            ['name' => 'Dompet Tunai', 'type' => 'cash', 'color' => '#f97316'],
+            ['name' => 'Rekening BCA', 'type' => 'bank', 'color' => '#2563eb'],
+            ['name' => 'GoPay Pribadi', 'type' => 'ewallet', 'color' => '#10b981'],
         ];
 
         foreach ($wallets as $wallet) {

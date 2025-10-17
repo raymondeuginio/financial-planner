@@ -13,12 +13,7 @@ class Wallet extends Model
     protected $fillable = [
         'name',
         'type',
-        'starting_balance',
         'color',
-    ];
-
-    protected $casts = [
-        'starting_balance' => 'decimal:2',
     ];
 
     public function transactions(): HasMany
@@ -28,9 +23,9 @@ class Wallet extends Model
 
     public function currentBalance(): float
     {
-        $income = $this->transactions()->where('type', 'income')->sum('amount');
-        $expense = $this->transactions()->where('type', 'expense')->sum('amount');
+        $income = (float) $this->transactions()->where('type', 'income')->sum('amount');
+        $expense = (float) $this->transactions()->where('type', 'expense')->sum('amount');
 
-        return (float) $this->starting_balance + (float) $income - (float) $expense;
+        return $income - $expense;
     }
 }

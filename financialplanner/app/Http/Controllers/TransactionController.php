@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,16 @@ class TransactionController extends Controller
     public function index(Request $request): View
     {
         $filters = $request->only(['start_date', 'end_date', 'type', 'wallet_id', 'category_id', 'search']);
+
+        $calendarMonthInput = $request->input('calendar_month');
+        try {
+            $calendarMonth = Carbon::createFromFormat('Y-m', $calendarMonthInput)->startOfMonth();
+        } catch (\Throwable $e) {
+            $calendarMonth = Carbon::now()->startOfMonth();
+        }
+
+        $calendarStart = $calendarMonth->copy()->startOfMonth();
+        $calendarEnd = $calendarMonth->copy()->endOfMonth();
 
         $query = Transaction::with(['wallet', 'category'])->filter($filters);
 
@@ -37,12 +48,36 @@ class TransactionController extends Controller
         ];
         $summary['net'] = $summary['income'] - $summary['expense'];
 
+        $calendarFilters = $filters;
+        $calendarFilters['start_date'] = $calendarStart->toDateString();
+        $calendarFilters['end_date'] = $calendarEnd->toDateString();
+
+        $calendarTransactions = Transaction::with(['wallet', 'category'])
+            ->filter($calendarFilters)
+            ->orderBy('occurred_at')
+            ->orderBy('id')
+            ->get()
+            ->groupBy(fn (Transaction $transaction) => $transaction->occurred_at->toDateString());
+
+        $calendarRangeStart = $calendarStart->copy()->startOfWeek(Carbon::MONDAY);
+        $calendarRangeEnd = $calendarEnd->copy()->endOfWeek(Carbon::SUNDAY);
+
+        $calendarDays = [];
+        for ($date = $calendarRangeStart->copy(); $date <= $calendarRangeEnd; $date->addDay()) {
+            $calendarDays[] = $date->copy();
+        }
+
         return view('transactions.index', [
             'transactions' => $transactions,
             'wallets' => Wallet::orderBy('name')->get(),
             'categories' => Category::orderBy('type')->orderBy('name')->get()->groupBy('type'),
             'filters' => $filters,
             'summary' => $summary,
+            'calendarMonth' => $calendarMonth,
+            'calendarDays' => $calendarDays,
+            'calendarTransactions' => $calendarTransactions,
+            'previousMonth' => $calendarMonth->copy()->subMonth()->format('Y-m'),
+            'nextMonth' => $calendarMonth->copy()->addMonth()->format('Y-m'),
         ]);
     }
 
@@ -63,7 +98,7 @@ class TransactionController extends Controller
 
         Transaction::create($data);
 
-        return redirect()->route('transactions.index')->with('status', 'Transaction added successfully.');
+        return redirect()->route('transactions.index')->with('status', 'Transaksi berhasil ditambahkan.');
     }
 
     public function edit(Transaction $transaction): View
@@ -83,14 +118,14 @@ class TransactionController extends Controller
 
         $transaction->update($data);
 
-        return redirect()->route('transactions.index')->with('status', 'Transaction updated.');
+        return redirect()->route('transactions.index')->with('status', 'Transaksi berhasil diperbarui.');
     }
 
     public function destroy(Transaction $transaction): RedirectResponse
     {
         $transaction->delete();
 
-        return redirect()->route('transactions.index')->with('status', 'Transaction removed.');
+        return redirect()->route('transactions.index')->with('status', 'Transaksi berhasil dihapus.');
     }
 
     public function exportCsv(Request $request): StreamedResponse
@@ -107,7 +142,7 @@ class TransactionController extends Controller
             'Content-Disposition' => 'attachment; filename="transactions.csv"',
         ];
 
-        $columns = ['Date', 'Description', 'Category', 'Wallet', 'Type', 'Amount', 'Notes'];
+        $columns = ['Tanggal', 'Deskripsi', 'Kategori', 'Dompet', 'Jenis', 'Nominal', 'Catatan'];
 
         $callback = function () use ($transactions, $columns) {
             $handle = fopen('php://output', 'w');
@@ -119,7 +154,7 @@ class TransactionController extends Controller
                     $transaction->description,
                     $transaction->category?->name,
                     $transaction->wallet?->name,
-                    ucfirst($transaction->type),
+                    $transaction->type === 'income' ? 'Pemasukan' : 'Pengeluaran',
                     $transaction->amount,
                     $transaction->notes,
                 ]);
@@ -148,7 +183,7 @@ class TransactionController extends Controller
             $type = $request->input('type');
 
             if ($category && $type && $category->type !== $type) {
-                $validator->errors()->add('type', 'The transaction type must match the selected category.');
+                $validator->errors()->add('type', 'Jenis transaksi harus sesuai dengan kategori yang dipilih.');
             }
         });
 
